@@ -6,23 +6,20 @@
 % Deleted "vendor" attribute to make data consistent with with what we
 % used in the data mining book.
 %
+% 2x+10;
+%
 @relation 'cpu'
 @attribute X numeric
 @attribute Y numeric
 @data
-1, 1
-2, 4
-3, 9
-4, 16
-5, 25
-6, 36
-7, 49
-8, 64
-9, 81
-10, 100
-11, 121
-12, 144
-13, 169
-14, 196
-15, 225
-16, 256
+1, 12
+2, 14
+3, 16
+4, 18
+10, 30
+15, 10
+16, 42
+20, 50
+17, 2032
+17, 44
+19, 45

@@ -10,48 +10,20 @@ LinearApprox::LinearApprox(Instance& Inst)
 
 void LinearApprox::CreateSimpleApproximation(int argindex)
 {
-  double sa = 0;
-  double sb = 0;
-  double currA;
-  double currB;
-  int count = 0;
-  narg = argindex;
-
-  for (int i = 0; i < TS.data.size() - 1; ++i)
-  {
-    for (int j = i + 1; j < TS.data.size(); ++j)
-    {
-      if (TS.data[i][narg] == TS.data[j][narg])
-        continue;
-      currA = (TS.data[i][TS.nfun] - TS.data[j][TS.nfun]) / (TS.data[i][narg] - TS.data[j][narg]);
-      currB = TS.data[i][TS.nfun] - TS.data[i][narg] * currA;
-      sa += currA;
-      sb += currB;
-      count++;
-    }
-  }
-  a = sa / count;
-  b = sb / count;
-
-  return;
-}
-
-void LinearApprox::CreateSimpleApproximation2(int argindex)
-{
   narg = argindex;
   double sumx = 0;
   double sumxx = 0;
   double sumy = 0;
   double sumxy = 0;
-  int n = TS.data.size();
+  int n = TS.ComputeSumWeights();//TS.data.size();
 
 
-  for (int i = 0; i < n; i++)
+  for (int i = 0; i < TS.data.size(); i++)
   {
-    sumx += TS.data[i][narg];
-    sumxx += TS.data[i][narg] * TS.data[i][narg];
-    sumy += TS.data[i][TS.nfun];
-    sumxy += TS.data[i][narg] * TS.data[i][TS.nfun];
+    sumx += TS.data[i][narg] * TS.data[i][TS.nfun + 1];
+    sumxx += TS.data[i][narg] * TS.data[i][narg] * TS.data[i][TS.nfun + 1];
+    sumy += TS.data[i][TS.nfun] * TS.data[i][TS.nfun + 1];
+    sumxy += TS.data[i][narg] * TS.data[i][TS.nfun] * TS.data[i][TS.nfun + 1];
   }
 
   a = (n * sumxy - sumx * sumy) / (n * sumxx - sumx * sumx);
@@ -82,6 +54,45 @@ vector<double> LinearApprox::predict(Instance Inst)
     res.push_back(a * Inst.data[i][narg] + b);
   }
   return res;
+}
+
+vector<double> LinearApprox::TuneWeights(Instance TestInst, int nTunes)
+{
+  vector<double> weights;
+  vector<double> result;
+  const int nrolls = 50;  // number of experiments
+  double alpha = pow(2, -15);
+  double grad;
+  double eps;
+  double x;
+  for (int i = 0; i < TS.data.size(); ++i)
+  {
+    weights.push_back(double(rand() % 12) / 10);
+  }
+
+  default_random_engine generator;
+  for (int iter = 0; iter < nTunes; ++iter)
+  {
+    for (int i = 0; i < weights.size(); ++i)
+    {
+      grad = 0;
+      x = weights[i];
+      normal_distribution<double> distribution(0.0, x / 5);
+      for (int j = 0; j < nrolls; ++j)
+      {
+        eps = distribution(generator);
+        weights[i] = x + eps;
+        TS.SetWeights(weights);
+        CreateSimpleApproximation(0);
+        result = predict(TestInst);
+
+        grad += eps * TestInst.RMSE(result) * alpha;
+      }
+      weights[i] = x + grad;
+
+    }
+  }
+  return weights;
 }
 
 LinearApprox::~LinearApprox()

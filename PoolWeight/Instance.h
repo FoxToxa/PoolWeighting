@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <random>
 
 using namespace std;
 
@@ -19,6 +20,10 @@ public:
 
   double MeanVal();
   double Sum();
+  double ComputeSumWeights();
+  double RMSE(vector<double> res);
+
+  void SetWeights(vector<double> weights);
 
   ~Instance();
 

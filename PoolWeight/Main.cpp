@@ -1,6 +1,7 @@
 #include <fstream>
 #include <ctime>
 #include <random>
+#include <Windows.h>
 
 #include "LinearApprox.h"
 #include "GradBoost.h"
@@ -10,8 +11,13 @@ using namespace std;
 void SplitInstance2(Instance& TrainSample, Instance& ControlSample, double div = 0.9);
 double mse(Instance Inst, vector<double> pred);
 
+double test();
+
 int main()
 {
+  //test();
+  //return 0;
+
   int start_time = clock();
   ifstream inptFile;
   string inptStr;
@@ -52,56 +58,23 @@ int main()
 
   Instance TestInst;
   Instance ContInst;
-  
-  SplitInstance2(Inst, ContInst, 0.9);
-  
-  //ContInst.print();
-  cout << endl;
 
-  //SplitInstance2(ContInst, TestInst, 0.5);
-
-  GradBoost GB(10, 1, 20, 0.1);
+  SplitInstance2(Inst, ContInst, 0.8);
+  vector<double> pred;
+  
+  GradBoost GB(4, 2, 5, 0.1);
   GB.fit(Inst);
+  pred = GB.predict(ContInst);
+  cout << "GB no_weights = " << ContInst.RMSE(pred) << endl;
 
-  vector<double> GBres = GB.predict(ContInst);
-  meanSE = mse(ContInst, GBres);
-  cout << "Gradient Boosting Mean Square Error: " << meanSE << endl;
-  /*
-  for (double x : GBres)
-  {
-    cout << x << endl;
-  }
-  */
-  LinearApprox LA(Inst);
-  LA.CreateSimpleApproximation2(0);
-  int minIdx = 0;
-  double minDev = LA.CheckDeviation(ContInst);
-  double chkDev;
-  for (int i = 1; i < Inst.nfun; ++i)
-  {
-    LA.CreateSimpleApproximation2(i);
-    chkDev = LA.CheckDeviation(ContInst);
-    if (chkDev < minDev)
-    {
-      minIdx = i;
-      minDev = chkDev;
-    }
-  }
 
-  LA.CreateSimpleApproximation2(minIdx);
-  cout << endl;
-  LA.ShowApprFunc();
-  vector<double> linRes = LA.predict(ContInst);
-  cout << endl;
+  DecisionTree DT(Inst, 4, 2);
+  vector<double> w = DT.TuneWeights(ContInst, 5);
+  Inst.SetWeights(w);
+  GB.fit(Inst);
+  pred = GB.predict(ContInst);
+  cout << "GB with weights = " << ContInst.RMSE(pred) << endl;
 
-  meanSE = mse(ContInst, linRes);
-  cout << "Linear Approximation Mean Square Error: " << meanSE << endl;
-  /*
-  for (double x : linRes)
-  {
-    cout << x << endl;
-  }
-  */
   int end_time = clock();
   cout << endl << "Time: " << end_time - start_time << " ms" << endl;
   
@@ -135,4 +108,31 @@ double mse(Instance Inst, vector<double> pred)
     res += pow(Inst.data[i][Inst.nfun] - pred[i], 2);
   }
   return res / pred.size();
+}
+
+double test()
+{
+  double x = 15;
+  double y = 138;
+
+
+  const int nrolls = 100;  // number of experiments
+  
+  default_random_engine generator;
+  normal_distribution<double> distribution(0.0, x/5);
+  double F;
+  double eps;
+  double delta =  0;
+  for (int i = 0; i<nrolls; ++i) {
+    eps = distribution(generator); 
+
+    F = pow((2 * (x +  eps) + 10 - y), 2);
+
+    delta += eps * F * pow(2, -8);
+    //cout << eps << "  " << delta << endl;
+    //Sleep(1000);
+  }
+
+  cout << delta << endl;
+  return 0;
 }

@@ -11,7 +11,8 @@ GradBoost::GradBoost(int max_depth, int min_size, int n_estimators, double learn
 
 void GradBoost::fit(Instance TS)
 {
-  DecisionTree *DT;
+  Y.clear();
+  Trees.clear();
   for (double *x : TS.data)
   {
     Y.push_back(x[TS.nfun]);
@@ -34,9 +35,7 @@ void GradBoost::fit(Instance TS)
       }
     }
     Trees.push_back(DecisionTree(TS, max_depth, min_size));
-    //DT = new DecisionTree(TS, max_depth, min_size);
-    //DT->fit();
-    Trees[i].fit();
+    Trees[i].fitWeight();
     resid = Trees[i].predict(TS);
     for (int j = 0; j < resid.size(); ++j)
     {

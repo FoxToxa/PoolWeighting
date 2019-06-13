@@ -16,6 +16,9 @@ public:
   double value = 0;
 
   void fit();
+  void fitWeight();
+
+  vector<double> TuneWeights(Instance TestInst, int nTunes = 1);
 
   void splitByArg(Instance &leftInst, Instance &rightInst);
 
